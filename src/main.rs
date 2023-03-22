@@ -2,7 +2,7 @@ mod ui;
 use std::{
     ffi::OsStr,
     fs,
-    io::{self, Write},
+    io::{self, Error, ErrorKind, Write},
     path::Path,
     process::exit,
 };
@@ -36,11 +36,6 @@ fn handle_path(path: &mut String) -> Result<bool, String> {
     Ok(true)
 }
 
-fn handle_extensions(string_ext: &String) {
-    let extensions = parse_extensions(string_ext);
-    println!(">> Deleting {:?} from", extensions);
-}
-
 fn delete(source_path: String, extensions: Vec<String>) {
     let paths = fs::read_dir(source_path).unwrap();
 
@@ -55,7 +50,8 @@ fn delete(source_path: String, extensions: Vec<String>) {
                 if !extensions.contains(&e.to_string()) {
                     continue;
                 }
-                println!("Found: {}", path.display());
+                println!("[INFO] - removing: {} ...", path.display());
+                fs::remove_file(path).expect("[ERROR] - unable to delete file");
             }
             None => (),
         }
@@ -86,9 +82,11 @@ fn main() {
         format!("Are you sure you want to clean {} [y/n] ", path).as_str(),
         &mut confirm,
     );
+
     let confirm_words = vec!["yes", "y"];
     if !confirm_words.contains(&confirm.to_lowercase().as_str()) {
         delete(path, extensions);
+        println!("[LOG] - finished")
     } else {
         println!("Aborting...");
     }
